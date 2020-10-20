@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <meta charset="utf-8">
 <style>
 #date-rect {
@@ -11,7 +10,6 @@
 #date {
   font-size: 40px;
 }
-
 </style>
 
 <!-- Load d3.js -->
@@ -46,7 +44,7 @@ d3.csv("https://raw.githubusercontent.com/RebeccaFlach/Covid-deaths-animated/mai
   var subgroups = data.columns.slice(1);
 
 
-  // List of groups = row names. Date of death
+  // List of groups = row names = Date of death
   var groups = d3.map(data, function(d){return(d.date)}).keys();
 
   var parseDate = d3.timeParse("%Y-%m-%d"); //for making written date into js date object
@@ -70,11 +68,11 @@ d3.csv("https://raw.githubusercontent.com/RebeccaFlach/Covid-deaths-animated/mai
     .attr("id", "left-axis");
 
 
-  var stackedData = [];
-  var stackedDataMain = d3.stack()
-    .keys(subgroups.reverse())
+  var stackedData = []; //this holds the data that is currently shown on the graph. farther down, a loop adds a day of data to this and graphs it
+  var stackedDataMain = d3.stack() // this var holds all data
+    .keys(subgroups.reverse()) //original file goes most recent -> oldest, this reverses so its in the right order
     (data);
-    stackedData.push(stackedDataMain[0]);
+    stackedData.push(stackedDataMain[0]); //pushes deaths into the array that occured before daily recording started. 
 
 var graph = function(){
     svg.append("g")
@@ -86,19 +84,21 @@ var graph = function(){
           .attr("stroke", "black")
           .attr("stroke-width", 1)
           .selectAll("rect")
-          // enter a second time = loop subgroup per subgroup to add all rectangles
-          .data(function(d) { return d; })
+          // enter a second time 
+          .data(function(d) { return d })
           .enter().append("rect")
             .attr("x", function(d) {return x(parseDate(d.data.date)); })
-            .attr("y", function(d) {return y(d[1]); })
-            .attr("height", function(d) {return y(d[0]) - y(d[1]); })
+            .attr("y", function(d) {return y(d[1]); }) // the y coord depends on the height of what is below it
+            .attr("height", function(d) {return y(d[0]) - y(d[1]); }) 
             .attr("width", (d, i) => {return x(parseDate(data[1].date)) -  x(parseDate(data[0].date))})
             .attr("class", "bar");
 
     }
-    var colors = ["black", "#ffbf00"];
-    var colorStorage = ["#780800", "#c70d00", "#fc1303", "#ff6a00"]
-
+    var colors = ["black", "#ffbf00"]; 
+    var colorStorage = ["#780800", "#c70d00", "#fc1303", "#ff6a00"]; 
+        // this is so the deaths before daily recording started show up in black. The first deaths added show up in yellow, then colors in between are added down below
+        
+        
     var color = d3.scaleOrdinal()
     .domain(subgroups)
     .range(colors);
@@ -118,12 +118,12 @@ var graph = function(){
       .domain(subgroups)
       .range(colors);
 
-      if(i < stackedDataMain.length){
-        stackedData.push(stackedDataMain[i]);
-        var displayDate = stackedDataMain[i].key;
-        $("#date").text(displayDate.replace("/", "-"));
+      if(i < stackedDataMain.length){ //if there is still days left to do
+        stackedData.push(stackedDataMain[i]); // add the next reporting day of data
+        var displayDate = stackedDataMain[i].key; //change the date of reporting shown on top
+        $("#date").text(displayDate.replace("/", "-")); 
 
-        graph();
+        graph(); // graph again, including the day of data that was just added
         i += 1;
 
       }
@@ -132,7 +132,7 @@ var graph = function(){
       }
     } ;
 
-    var interval = setInterval(delayGraph, 500)
+    var interval = setInterval(delayGraph, 500) //each day is a half second 
 
     var loopEntireThing = function(){
       svg.selectAll(".bar").remove();
@@ -145,7 +145,7 @@ var graph = function(){
       interval = setInterval(delayGraph, 500);
     }
 
-    //reset graph on doubleclick,
+    //reset graph on doubleclick
                 svg
                   .append('rect')
                   .style("fill", "none")
